@@ -1,12 +1,10 @@
 % Clear command window, workspace, and close all figures
 clc; 
-clear; 
+clear;
 close all;
 
-% Open a dialog box to select a file
-[file, path] = uigetfile('*.*', 'Select the ECG file');
-
 % Load the selected file
+[file, path] = uigetfile('*.*', 'Select the ECG file');
 load(fullfile(path, file));
 disp('File loaded successfully');
 disp(file);
@@ -14,7 +12,7 @@ disp(file);
 % Sampling frequency
 Fs = 250;
 
-% Normalize the signal
+% Normalize the signal , co. of variation
 val = (val - mean(val))/std(val);
 t = (1:1:length(val))*(1/Fs);
 
@@ -41,11 +39,12 @@ xlabel('Frequency (Hz)');
 ylabel('strength');
 title('ECG Frequency');
 
-% Filter FIR
+
+
 % Filter Features
 orden = 200;
-Fp1 = 2;   % Lower passband frequency
-Fp2 = 45;  % Upper passband frequency
+Fp1 = 1.2;   % Lower passband frequency
+Fp2 = 49;  % Upper passband frequency
 
 % Normalize frequencies
 Fp1_n = Fp1 / (Fs / 2);
@@ -109,18 +108,31 @@ ylabel('amplitude (mV^2)');
 title('absolute ECG');
 
 
+
+%highest peak
+highest_peak = max(ecg_squared);
+lowest_peak = min(ecg_squared);   % Minimum peak height
+
+peak_height_variation = highest_peak - lowest_peak;
+
+
 % Find R peaks using the findpeaks function
-[peaks_squared, locations_squared] = findpeaks(ecg_squared, 'MinPeakHeight', 10,'MinPeakDistance', 0.2 * Fs);
+[peaks_squared, locations] = findpeaks(ecg_squared, 'MinPeakHeight', 4,'MinPeakDistance', 0.2 * Fs);
+
+
+%irregular heart rhythm by checking the standard deviation of R-R intervals (higher deviation suggests irregularity).
+rr_intervals = diff(peaks_squared);
+
 
 % Convert peak locations to time values
-peak_times_squared = locations_squared / Fs;
+peak_times_squared = locations / Fs;
 
 % Plot ECG signal with R peaks
 figure;
 plot(t, ecg_squared);
 xlim([0 4])
 hold on;
-plot(peak_times_squared, peaks_squared, 'r*', 'MarkerSize', 8);
+plot(peak_times_squared, peaks_squared, 'r*', 'MarkerSize', 6);
 xlim([0 4])
 xlabel('time (s)');
 ylabel('amplitude (mV^2)');
@@ -142,15 +154,29 @@ heart_rate_str = num2str(heartt);
 disp(['Heart Rate: ', heart_rate_str, ' beats per minute']);
 
 % Check for arrhythmia
-if  (heartt > 100) || (heartt < 60)
-    disp('ECG signal has arrhythmia.');
-    msg = sprintf('ECG signal has arrhythmia. \nHeart rate: %s beats per minute', heart_rate_str);
+if  (heartt > 100) 
+    disp('ECG signal has tachycardia (fast heart rate)');
+    msg = sprintf('ECG signal has tachycardia (fast heart rate). \nHeart rate: %s beats per minute', heart_rate_str);
     msgbox(msg, 'ECG', 'modal');
-else
-    disp('ECG signal does not have arrhythmia.');
-    msg = sprintf('ECG signal does not have arrhythmia. \nHeart rate: %s beats per minute', heart_rate_str);
+elseif (heartt < 60)
+    
+    disp('ECG signal has bradycardia (slow heart rate)');
+    msg = sprintf('ECG signal has bradycardia (slow heart rate) \nHeart rate: %s beats per minute', heart_rate_str);
+    msgbox(msg, 'ECG', 'modal');
+
+elseif  (heartt < 100) || (heartt > 60)
+   disp('ECG signal is normal');
+    msg = sprintf('ECG signal is normal \nHeart rate: %s beats per minute', heart_rate_str);
+    msgbox(msg, 'ECG', 'modal');
+
+
+elseif (std(rr_intervals) > 0.1 * mean(rr_intervals))  % Check for high standard deviation of R-R intervals
+    disp('ECG signal is irrigular');
+    msg = sprintf('ECG signal is irrigular \nHeart rate: %s beats per minute', heart_rate_str);
     msgbox(msg, 'ECG', 'modal');
 end
+
+
 
 
 
