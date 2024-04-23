@@ -38,7 +38,7 @@ f = (1:1:L)*((Fs/2)/L);
 figure;
 plot(f, F)
 xlabel('Frequency (Hz)');
-ylabel('strength');val
+ylabel('strength');
 title('ECG Frequency');
 
 % Filter FIR
