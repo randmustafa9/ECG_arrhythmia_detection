@@ -109,11 +109,6 @@ title('absolute ECG');
 
 
 
-%highest peak
-highest_peak = max(ecg_squared);
-lowest_peak = min(ecg_squared);   % Minimum peak height
-
-peak_height_variation = highest_peak - lowest_peak;
 
 
 % Find R peaks using the findpeaks function
@@ -122,6 +117,7 @@ peak_height_variation = highest_peak - lowest_peak;
 
 %irregular heart rhythm by checking the standard deviation of R-R intervals (higher deviation suggests irregularity).
 rr_intervals = diff(peaks_squared);
+rr_intervals_std = std(rr_intervals);
 
 
 % Convert peak locations to time values
@@ -170,13 +166,11 @@ elseif  (heartt < 100) || (heartt > 60)
     msgbox(msg, 'ECG', 'modal');
 
 
-elseif (std(rr_intervals) > 0.1 * mean(rr_intervals))  % Check for high standard deviation of R-R intervals
+elseif (rr_intervals_std > 0.2 * mean(rr_intervals)) 
     disp('ECG signal is irrigular');
     msg = sprintf('ECG signal is irrigular \nHeart rate: %s beats per minute', heart_rate_str);
     msgbox(msg, 'ECG', 'modal');
 end
-
-
 
 
 
